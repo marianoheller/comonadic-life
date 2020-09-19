@@ -1,51 +1,83 @@
+{-# LANGUAGE DeriveGeneric #-}
+
 module Lib where
 
 import Control.Comonad
-import Control.Monad (liftM2)
+import Control.Monad (liftM2, replicateM)
+import GHC.Generics (Generic)
+import System.Random (Random (randomIO))
+import qualified Test.Tasty.QuickCheck as QC
 
-data Zipper a = Zipper [a] a [a]
+data LZ a = LZ [a] a [a] deriving (Eq, Show, Generic)
 
-leftZipper :: Zipper a -> Zipper a
-leftZipper (Zipper [] a r) = Zipper [] a r
-leftZipper (Zipper (l : ls) a r) = Zipper ls l (a : r)
+leftLZ :: LZ a -> LZ a
+leftLZ (LZ [] a r) = LZ [] a r
+leftLZ (LZ (l : ls) a r) = LZ ls l (a : r)
 
-rightZipper :: Zipper a -> Zipper a
-rightZipper (Zipper l a []) = Zipper l a []
-rightZipper (Zipper l a (r : rs)) = Zipper (a : l) r rs
+rightLZ :: LZ a -> LZ a
+rightLZ (LZ l a []) = LZ l a []
+rightLZ (LZ l a (r : rs)) = LZ (a : l) r rs
 
-write :: a -> Zipper a -> Zipper a
-write a (Zipper l _ r) = Zipper l a r
+write :: a -> LZ a -> LZ a
+write a (LZ l _ r) = LZ l a r
 
-read :: Zipper a -> a
-read (Zipper _ a _) = a
+read :: LZ a -> a
+read (LZ _ a _) = a
 
-toList :: Zipper a -> Int -> [a]
-toList (Zipper ls x rs) n = reverse (take n ls) ++ [x] ++ take n rs
+toList :: LZ a -> [a]
+toList (LZ ls x rs) = reverse ls ++ [x] ++ rs
 
-instance Functor Zipper where
-  fmap f (Zipper l a r) = Zipper (fmap f l) (f a) (fmap f r)
+toListN :: LZ a -> Int -> [a]
+toListN (LZ ls x rs) n = reverse (take n ls) ++ [x] ++ take n rs
 
-instance Comonad Zipper where
-  extract (Zipper _ a _) = a
-  duplicate z = Zipper (iterate' leftZipper z) z (iterate' rightZipper z)
+instance Functor LZ where
+  fmap f (LZ l a r) = LZ (fmap f l) (f a) (fmap f r)
+
+instance Comonad LZ where
+  extract (LZ _ a _) = a
+  duplicate z = LZ (moveLeft z) z (moveRight z)
     where
-      iterate' f = tail . iterate f
+      moveLeft = tail . interateUntil leftLZ predLeft
+      moveRight = tail . interateUntil rightLZ predRight
+      predLeft (LZ [] _ _) = True
+      predLeft _ = False
+      predRight (LZ _ _ []) = True
+      predRight _ = False
+
+interateUntil :: (a -> a) -> (a -> Bool) -> a -> [a]
+interateUntil f pred source = go [source]
+  where
+    go acc@(s : _) =
+      let next = f s
+       in case pred next of
+            True -> reverse (next : acc)
+            False -> go (next : acc)
+
+instance QC.Arbitrary a => QC.Arbitrary (LZ a) where
+  arbitrary = do
+    a <- QC.arbitrary
+    QC.NonEmpty ls <- QC.arbitrary :: QC.Arbitrary a => QC.Gen (QC.NonEmptyList a)
+    QC.NonEmpty rs <- QC.arbitrary :: QC.Arbitrary a => QC.Gen (QC.NonEmptyList a)
+    return $ LZ ls a rs
+
+instance QC.CoArbitrary a => QC.CoArbitrary (LZ a) where
+  coarbitrary = QC.genericCoarbitrary
 
 {- -------------------------------------------------- -}
 {- Z -}
-data Z a = Z (Zipper (Zipper a))
+data Z a = Z (LZ (LZ a))
 
 upZ :: Z a -> Z a
-upZ (Z z) = Z (leftZipper z)
+upZ (Z z) = Z (leftLZ z)
 
 downZ :: Z a -> Z a
-downZ (Z z) = Z (rightZipper z)
+downZ (Z z) = Z (rightLZ z)
 
 leftZ :: Z a -> Z a
-leftZ (Z z) = Z (fmap leftZipper z)
+leftZ (Z z) = Z (fmap leftLZ z)
 
 rightZ :: Z a -> Z a
-rightZ (Z z) = Z (fmap rightZipper z)
+rightZ (Z z) = Z (fmap rightLZ z)
 
 instance Functor Z where
   fmap f (Z a) = Z $ (fmap . fmap) f a
@@ -56,7 +88,7 @@ instance Comonad Z where
     where
       horizontal = wrapDir leftZ rightZ
       vertical = wrapDir upZ downZ
-      wrapDir a b e = Zipper (iterate' a e) e (iterate' b e)
+      wrapDir a b e = LZ (iterate' a e) e (iterate' b e)
       iterate' f = tail . iterate f
 
 {- -------------------------------------------------- -}
@@ -89,30 +121,22 @@ evolve = extend rule
 {- -------------------------------------------------- -}
 {- Game Display -}
 
-dispLine :: Zipper Bool -> String
+dispLine :: LZ Bool -> String
 dispLine z =
-  map dispC $ toList z 6
+  map dispC $ toListN z 6
   where
     dispC True = '*'
     dispC False = ' '
 
 disp :: Z Bool -> String
 disp (Z z) =
-  unlines $ map dispLine $ toList z 6
+  unlines $ map dispLine $ toListN z 6
 
-glider :: Z Bool
-glider =
-  Z $ Zipper (repeat fz) fz rs
-  where
-    rs =
-      [ line [f, t, f],
-        line [f, f, t],
-        line [t, t, t]
-      ]
-        ++ repeat fz
-    t = True
-    f = False
-    fl = repeat f
-    fz = Zipper fl f fl
-    line l =
-      Zipper fl f (l ++ fl)
+{- -------------------------------------------------- -}
+{- Gen -}
+
+makeRow :: Int -> IO [Bool]
+makeRow n = replicateM n randomIO
+
+makeGrid :: Int -> IO [[Bool]]
+makeGrid n = replicateM n (makeRow n)

@@ -1,31 +1,25 @@
+import Data.Proxy
 import Lib
 import Test.Tasty
 import Test.Tasty.QuickCheck as QC
-import Test.Tasty.QuickCheck.Laws.Comonad
+import Test.Tasty.QuickCheck.Laws.Comonad (testComonadLaws)
 
 main :: IO ()
 main = defaultMain tests
 
 tests :: TestTree
-tests = testGroup "Tests" [properties, unitTests]
+tests = testGroup "Tests" [comonadLZLaws, unitTests]
 
-properties =
-  testGroup
-    "(checked by QuickCheck)"
-    [ QC.testProperty "sort == sort . reverse" $
-        \list -> (list :: [Int]) == list
-    ]
-{- 
-comonadZLaws :: TestTree
-comonadZLaws =
+comonadLZLaws :: TestTree
+comonadLZLaws =
   testComonadLaws
-    Zipper
-    undefined
-    undefined
-    undefined
-    undefined
-    undefined
-    undefined -}
+    (Proxy :: Proxy LZ)
+    (Proxy :: Proxy Bool)
+    (Proxy :: Proxy Bool)
+    (Proxy :: Proxy Bool)
+    (Proxy :: Proxy Bool)
+    (\_ -> (==))
+    (\_ -> (==))
 
 unitTests =
   testGroup
