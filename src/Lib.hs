@@ -6,7 +6,7 @@ import Control.Comonad
 import Control.Monad (liftM2, replicateM)
 import GHC.Generics (Generic)
 import System.Random (Random (randomIO))
-import qualified Test.Tasty.QuickCheck as QC
+import Test.Tasty.QuickCheck
 
 data LZ a = LZ [a] a [a] deriving (Eq, Show, Generic)
 
@@ -50,15 +50,15 @@ interateUntil f predicate seed =
   where
     next = f seed
 
-instance QC.Arbitrary a => QC.Arbitrary (LZ a) where
+instance Arbitrary a => Arbitrary (LZ a) where
   arbitrary = do
-    a <- QC.arbitrary
-    QC.NonEmpty ls <- QC.arbitrary :: QC.Arbitrary a => QC.Gen (QC.NonEmptyList a)
-    QC.NonEmpty rs <- QC.arbitrary :: QC.Arbitrary a => QC.Gen (QC.NonEmptyList a)
+    a <- arbitrary
+    NonEmpty ls <- arbitrary :: Arbitrary a => Gen (NonEmptyList a)
+    NonEmpty rs <- arbitrary :: Arbitrary a => Gen (NonEmptyList a)
     return $ LZ ls a rs
 
-instance QC.CoArbitrary a => QC.CoArbitrary (LZ a) where
-  coarbitrary = QC.genericCoarbitrary
+instance CoArbitrary a => CoArbitrary (LZ a) where
+  coarbitrary = genericCoarbitrary
 
 {- -------------------------------------------------- -}
 {- Z -}
