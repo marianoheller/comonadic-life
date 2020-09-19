@@ -43,14 +43,13 @@ instance Comonad LZ where
       predRight _ = False
 
 interateUntil :: (a -> a) -> (a -> Bool) -> a -> [a]
-interateUntil f pred seed = go seed []
+interateUntil f pred seed =
+  case (pred next, pred seed) of
+    (True, True) -> []
+    (True, _) -> [next]
+    _ -> next : (interateUntil f pred next)
   where
-    go s acc =
-      let next = f s
-       in case (pred next, pred s) of
-            (True, True) -> reverse acc
-            (True, _) -> reverse (next : acc)
-            _ -> go next (next : acc)
+    next = f seed
 
 instance QC.Arbitrary a => QC.Arbitrary (LZ a) where
   arbitrary = do
