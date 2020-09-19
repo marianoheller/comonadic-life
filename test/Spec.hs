@@ -1,11 +1,9 @@
 import Data.Proxy
 import Lib
-import Spec.Comonad (testComonadLaws)
-import System.IO.Unsafe (unsafePerformIO)
 import Test.Tasty
 import Test.Tasty.HUnit
-import qualified Test.Tasty.QuickCheck as QC
 import Test.Tasty.QuickCheck.Laws.Functor (testFunctorLaws)
+import Test.Tasty.QuickCheck.Laws.Comonad (testComonadLaws)
 
 main :: IO ()
 main = defaultMain tests
@@ -24,7 +22,7 @@ functorLZLaws =
     (Proxy :: Proxy Bool)
     (Proxy :: Proxy Bool)
     (Proxy :: Proxy Bool)
-    (\_ -> (==))
+    (const (==))
 
 comonadLZLaws :: TestTree
 comonadLZLaws =
@@ -34,17 +32,15 @@ comonadLZLaws =
     (Proxy :: Proxy Bool)
     (Proxy :: Proxy Bool)
     (Proxy :: Proxy Bool)
-    (\_ -> (==))
-    (\_ -> (==))
-  where
-    debug eq a b = d `seq` eq a b
-      where
-        d = unsafePerformIO $ putStrLn $ show a ++ " | " ++ show b
+    (const (==))
+    (const (==))
 
 unitTests :: TestTree
 unitTests =
   testGroup
     "Unit tests"
     [ testCase "iterate until sample" $
-        interateUntil ((+) 1) ((==) 5) 1 @?= [2, 3, 4, 5]
+        interateUntil ((1 :: Int) +) (5 ==) 1 @?= [2, 3, 4, 5]
+    , testCase "iterate until sample string" $
+        interateUntil ("a" ++) ("aaa" ==) "a" @?= ["aa", "aaa"]
     ]

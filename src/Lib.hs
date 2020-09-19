@@ -5,7 +5,6 @@ module Lib where
 import Control.Comonad
 import Control.Monad (liftM2, replicateM)
 import GHC.Generics (Generic)
-import System.IO.Unsafe (unsafePerformIO)
 import System.Random (Random (randomIO))
 import qualified Test.Tasty.QuickCheck as QC
 
@@ -43,11 +42,11 @@ instance Comonad LZ where
       predRight _ = False
 
 interateUntil :: (a -> a) -> (a -> Bool) -> a -> [a]
-interateUntil f pred seed =
-  case (pred next, pred seed) of
+interateUntil f predicate seed =
+  case (predicate next, predicate seed) of
     (True, True) -> []
     (True, _) -> [next]
-    _ -> next : (interateUntil f pred next)
+    _ -> next : interateUntil f predicate next
   where
     next = f seed
 
@@ -63,7 +62,7 @@ instance QC.CoArbitrary a => QC.CoArbitrary (LZ a) where
 
 {- -------------------------------------------------- -}
 {- Z -}
-data Z a = Z (LZ (LZ a))
+newtype Z a = Z (LZ (LZ a))
 
 upZ :: Z a -> Z a
 upZ (Z z) = Z (leftLZ z)
@@ -82,7 +81,7 @@ instance Functor Z where
 
 instance Comonad Z where
   extract (Z a) = extract $ extract a
-  duplicate z = Z $ fmap horizontal $ vertical z
+  duplicate z = Z $ horizontal <$> vertical z
     where
       horizontal = wrapDir leftZ rightZ
       vertical = wrapDir upZ downZ
