@@ -5,6 +5,7 @@ module Lib where
 import Control.Comonad
 import Control.Monad (liftM2, replicateM)
 import GHC.Generics (Generic)
+import System.IO.Unsafe (unsafePerformIO)
 import System.Random (Random (randomIO))
 import qualified Test.Tasty.QuickCheck as QC
 
@@ -24,9 +25,6 @@ write a (LZ l _ r) = LZ l a r
 read :: LZ a -> a
 read (LZ _ a _) = a
 
-toList :: LZ a -> [a]
-toList (LZ ls x rs) = reverse ls ++ [x] ++ rs
-
 toListN :: LZ a -> Int -> [a]
 toListN (LZ ls x rs) n = reverse (take n ls) ++ [x] ++ take n rs
 
@@ -37,21 +35,22 @@ instance Comonad LZ where
   extract (LZ _ a _) = a
   duplicate z = LZ (moveLeft z) z (moveRight z)
     where
-      moveLeft = tail . interateUntil leftLZ predLeft
-      moveRight = tail . interateUntil rightLZ predRight
+      moveLeft = interateUntil leftLZ predLeft
+      moveRight = interateUntil rightLZ predRight
       predLeft (LZ [] _ _) = True
       predLeft _ = False
       predRight (LZ _ _ []) = True
       predRight _ = False
 
 interateUntil :: (a -> a) -> (a -> Bool) -> a -> [a]
-interateUntil f pred source = go [source]
+interateUntil f pred seed = go seed []
   where
-    go acc@(s : _) =
+    go s acc =
       let next = f s
-       in case pred next of
-            True -> reverse (next : acc)
-            False -> go (next : acc)
+       in case (pred next, pred s) of
+            (True, True) -> reverse acc
+            (True, _) -> reverse (next : acc)
+            _ -> go next (next : acc)
 
 instance QC.Arbitrary a => QC.Arbitrary (LZ a) where
   arbitrary = do

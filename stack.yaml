@@ -65,5 +65,6 @@ packages:
 # Allow a newer minor version of GHC than the snapshot specifies
 # compiler-check: newer-minor
 extra-deps:
-- git: https://github.com/d12frosted/quickcheck-comonad-laws
-  commit: 7b93c5cd0dd31b808f81fa0940b7f65cd43a3ee7
+#- git: https://github.com/d12frosted/quickcheck-comonad-laws
+#  commit: 7b93c5cd0dd31b808f81fa0940b7f65cd43a3ee7
+- tasty-quickcheck-laws-0.0.3@sha256:a33a458e2a98feee96be41969382a63c9570fdbca262f07e56d6b4d0228b36cd,2105

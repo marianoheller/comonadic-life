@@ -5,16 +5,12 @@
 
 packages:
 - completed:
-    name: quickcheck-comonad-laws
-    version: 1.0.0.0
-    git: https://github.com/d12frosted/quickcheck-comonad-laws
+    hackage: tasty-quickcheck-laws-0.0.3@sha256:a33a458e2a98feee96be41969382a63c9570fdbca262f07e56d6b4d0228b36cd,2105
     pantry-tree:
-      size: 725
-      sha256: 24c4197ee6db57be5ac005e7a4ddfea06fd60a6d5aeeec0eb410b9e2459e7683
-    commit: 7b93c5cd0dd31b808f81fa0940b7f65cd43a3ee7
+      size: 1528
+      sha256: fb68e01210ba5d9d979b1803a074ff8a2ab4972cfe2d2f6b6863a382914415e5
   original:
-    git: https://github.com/d12frosted/quickcheck-comonad-laws
-    commit: 7b93c5cd0dd31b808f81fa0940b7f65cd43a3ee7
+    hackage: tasty-quickcheck-laws-0.0.3@sha256:a33a458e2a98feee96be41969382a63c9570fdbca262f07e56d6b4d0228b36cd,2105
 snapshots:
 - completed:
     size: 532380

@@ -37,8 +37,9 @@ library
     , comonad
     , random
     , tasty
+    , tasty-hunit
     , tasty-quickcheck
-    , quickcheck-comonad-laws
+    , tasty-quickcheck-laws
     , QuickCheck
   default-language: Haskell2010
 
@@ -53,8 +54,9 @@ executable comonadic-life-exe
       base >=4.7 && <5
     , comonadic-life
     , tasty
+    , tasty-hunit
     , tasty-quickcheck
-    , quickcheck-comonad-laws
+    , tasty-quickcheck-laws
     , QuickCheck
   default-language: Haskell2010
 
@@ -69,8 +71,10 @@ test-suite comonadic-life-test
   build-depends:
       base >=4.7 && <5
     , comonadic-life
+    , comonad
     , tasty
+    , tasty-hunit
     , tasty-quickcheck
-    , quickcheck-comonad-laws
+    , tasty-quickcheck-laws
     , QuickCheck
   default-language: Haskell2010
