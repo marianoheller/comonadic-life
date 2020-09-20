@@ -66,16 +66,32 @@ instance CoArbitrary a => CoArbitrary (LZ a) where
 newtype Z a = Z (LZ (LZ a)) deriving (Eq, Show, Generic)
 
 upZ :: Z a -> Z a
-upZ (Z z) = Z (leftLZ z)
+upZ (Z lz) = Z (leftLZ lz)
 
 downZ :: Z a -> Z a
-downZ (Z z) = Z (rightLZ z)
+downZ (Z lz) = Z (rightLZ lz)
 
 leftZ :: Z a -> Z a
-leftZ (Z z) = Z (fmap leftLZ z)
+leftZ (Z lz) = Z (fmap leftLZ lz)
 
 rightZ :: Z a -> Z a
-rightZ (Z z) = Z (fmap rightLZ z)
+rightZ (Z lz) = Z (fmap rightLZ lz)
+
+isTopZ :: Z a -> Bool
+isTopZ (Z (LZ [] _ _)) = True
+isTopZ _ = False
+
+isBottomZ :: Z a -> Bool
+isBottomZ (Z (LZ _ _ [])) = True
+isBottomZ _ = False
+
+isLeftZ :: Z a -> Bool
+isLeftZ (Z (LZ _ (LZ [] _ _) _ )) = True
+isLeftZ _ = False
+
+isRightZ :: Z a -> Bool
+isRightZ (Z (LZ _ (LZ _ _ []) _ )) = True
+isRightZ _ = False
 
 instance Functor Z where
   fmap f (Z a) = Z $ (fmap . fmap) f a
@@ -84,10 +100,8 @@ instance Comonad Z where
   extract (Z a) = extract $ extract a
   duplicate z = Z $ horizontal <$> vertical z
     where
-      horizontal = wrapDir leftZ rightZ
-      vertical = wrapDir upZ downZ
-      wrapDir a b e = LZ (iterate' a e) e (iterate' b e)
-      iterate' f = tail . iterate f
+      vertical zipper = LZ (interateUntil upZ isTopZ zipper) zipper (interateUntil downZ isBottomZ zipper)
+      horizontal zipper = LZ (interateUntil leftZ isLeftZ zipper) zipper (interateUntil rightZ isRightZ zipper)
 
 instance Arbitrary a => Arbitrary (Z a) where
   arbitrary = do
