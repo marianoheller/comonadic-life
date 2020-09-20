@@ -30,6 +30,7 @@ toListN (LZ ls x rs) n = reverse (take n ls) ++ [x] ++ take n rs
 instance Functor LZ where
   fmap f (LZ l a r) = LZ (fmap f l) (f a) (fmap f r)
 
+
 instance Comonad LZ where
   extract (LZ _ a _) = a
   duplicate z = LZ (moveLeft z) z (moveRight z)
@@ -53,8 +54,8 @@ interateUntil f predicate seed =
 instance Arbitrary a => Arbitrary (LZ a) where
   arbitrary = do
     a <- arbitrary
-    NonEmpty ls <- arbitrary :: Arbitrary a => Gen (NonEmptyList a)
-    NonEmpty rs <- arbitrary :: Arbitrary a => Gen (NonEmptyList a)
+    ls <- vector 10 :: Arbitrary a => Gen [a]
+    rs <- vector 10 :: Arbitrary a => Gen [a]
     return $ LZ ls a rs
 
 instance CoArbitrary a => CoArbitrary (LZ a) where
@@ -76,15 +77,6 @@ leftZ (Z z) = Z (fmap leftLZ z)
 rightZ :: Z a -> Z a
 rightZ (Z z) = Z (fmap rightLZ z)
 
-instance Arbitrary a => Arbitrary (Z a) where
-  arbitrary = do
-    lz <- arbitrary :: Arbitrary a => Gen (LZ a)
-    let lzlz = duplicate lz
-    return $ Z lzlz
-
-instance CoArbitrary a => CoArbitrary (Z a) where
-  coarbitrary = genericCoarbitrary
-
 instance Functor Z where
   fmap f (Z a) = Z $ (fmap . fmap) f a
 
@@ -96,6 +88,14 @@ instance Comonad Z where
       vertical = wrapDir upZ downZ
       wrapDir a b e = LZ (iterate' a e) e (iterate' b e)
       iterate' f = tail . iterate f
+
+instance Arbitrary a => Arbitrary (Z a) where
+  arbitrary = do
+    lz <- arbitrary :: Arbitrary a => Gen (LZ a)
+    return $ Z $ duplicate lz
+
+instance CoArbitrary a => CoArbitrary (Z a) where
+  coarbitrary = genericCoarbitrary
 
 {- -------------------------------------------------- -}
 {- Game Logic -}

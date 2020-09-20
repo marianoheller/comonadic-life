@@ -15,7 +15,7 @@ lawsZL :: TestTree
 lawsZL = testGroup "laws ZL" [functorLZLaws, comonadLZLaws]
 
 lawsZ :: TestTree
-lawsZ = testGroup "laws Z" [functorZLaws]
+lawsZ = testGroup "laws Z" [functorZLaws, comonadZLaws]
 
 functorLZLaws :: TestTree
 functorLZLaws =
