@@ -9,10 +9,13 @@ main :: IO ()
 main = defaultMain tests
 
 tests :: TestTree
-tests = testGroup "Tests" [ lawsZL, unitTests]
+tests = testGroup "Tests" [lawsZL, lawsZ, unitTests]
 
 lawsZL :: TestTree
 lawsZL = testGroup "laws ZL" [functorLZLaws, comonadLZLaws]
+
+lawsZ :: TestTree
+lawsZ = testGroup "laws Z" [functorZLaws]
 
 functorLZLaws :: TestTree
 functorLZLaws =
@@ -24,10 +27,31 @@ functorLZLaws =
     (Proxy :: Proxy Bool)
     (const (==))
 
+functorZLaws :: TestTree
+functorZLaws =
+  testFunctorLaws
+    (Proxy :: Proxy Z)
+    (Proxy :: Proxy Bool)
+    (Proxy :: Proxy Bool)
+    (Proxy :: Proxy Bool)
+    (Proxy :: Proxy Bool)
+    (const (==))
+
 comonadLZLaws :: TestTree
 comonadLZLaws =
   testComonadLaws
     (Proxy :: Proxy LZ)
+    (Proxy :: Proxy Bool)
+    (Proxy :: Proxy Bool)
+    (Proxy :: Proxy Bool)
+    (Proxy :: Proxy Bool)
+    (const (==))
+    (const (==))
+
+comonadZLaws :: TestTree
+comonadZLaws =
+  testComonadLaws
+    (Proxy :: Proxy Z)
     (Proxy :: Proxy Bool)
     (Proxy :: Proxy Bool)
     (Proxy :: Proxy Bool)

@@ -62,7 +62,7 @@ instance CoArbitrary a => CoArbitrary (LZ a) where
 
 {- -------------------------------------------------- -}
 {- Z -}
-newtype Z a = Z (LZ (LZ a))
+newtype Z a = Z (LZ (LZ a)) deriving (Eq, Show, Generic)
 
 upZ :: Z a -> Z a
 upZ (Z z) = Z (leftLZ z)
@@ -75,6 +75,15 @@ leftZ (Z z) = Z (fmap leftLZ z)
 
 rightZ :: Z a -> Z a
 rightZ (Z z) = Z (fmap rightLZ z)
+
+instance Arbitrary a => Arbitrary (Z a) where
+  arbitrary = do
+    lz <- arbitrary :: Arbitrary a => Gen (LZ a)
+    let lzlz = duplicate lz
+    return $ Z lzlz
+
+instance CoArbitrary a => CoArbitrary (Z a) where
+  coarbitrary = genericCoarbitrary
 
 instance Functor Z where
   fmap f (Z a) = Z $ (fmap . fmap) f a
