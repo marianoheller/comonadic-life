@@ -87,10 +87,10 @@ isBottomZ :: Z a -> Bool
 isBottomZ (Z lz) = isEndLZ lz
 
 isLeftZ :: Z a -> Bool
-isLeftZ (Z (LZ _ lz _ )) = isStartLZ lz
+isLeftZ (Z (LZ _ lz _)) = isStartLZ lz
 
 isRightZ :: Z a -> Bool
-isRightZ (Z (LZ _ lz _ )) = isEndLZ lz
+isRightZ (Z (LZ _ lz _)) = isEndLZ lz
 
 instance Functor Z where
   fmap f (Z a) = Z $ (fmap . fmap) f a
@@ -108,8 +108,7 @@ instance Arbitrary a => Arbitrary (Z a) where
     return $ Z $ duplicate lz
 
 instance CoArbitrary a => CoArbitrary (Z a) where
-  coarbitrary = genericCoarbitrary
-
+  coarbitrary _ = variant 0
 
 {- -------------------------------------------------- -}
 {- Game Logic -}

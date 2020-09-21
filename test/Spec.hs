@@ -1,16 +1,16 @@
+import Control.Comonad
 import Data.Proxy
 import Lib
 import Test.Tasty
 import Test.Tasty.HUnit
-import Test.Tasty.QuickCheck.Laws.Functor (testFunctorLaws)
 import Test.Tasty.QuickCheck.Laws.Comonad (testComonadLaws)
-import Control.Comonad
+import Test.Tasty.QuickCheck.Laws.Functor (testFunctorLaws)
 
 main :: IO ()
 main = defaultMain tests
 
 tests :: TestTree
-tests = testGroup "Tests" [lawsZL, lawsZ, unitTests, unitTestsZ]
+tests = testGroup "Tests" [lawsZL, lawsZ, unitTests]
 
 lawsZL :: TestTree
 lawsZL = testGroup "laws ZL" [functorLZLaws, comonadLZLaws]
@@ -64,35 +64,34 @@ unitTests :: TestTree
 unitTests =
   testGroup
     "Unit tests"
+    [ iterateUntilTests,
+      aliveNeighboursTests
+    ]
+
+iterateUntilTests :: TestTree
+iterateUntilTests =
+  testGroup
+    "interate until unit tests"
     [ testCase "iterate until sample" $
-        interateUntil ((1 :: Int) +) (5 ==) 1 @?= [2, 3, 4, 5]
-    , testCase "iterate until sample string" $
+        interateUntil ((1 :: Int) +) (5 ==) 1 @?= [2, 3, 4, 5],
+      testCase "iterate until sample string" $
         interateUntil ("a" ++) ("aaa" ==) "a" @?= ["aa", "aaa"]
     ]
 
-mapInd :: (a -> Int -> b) -> [a] -> [b]
-mapInd f l = zipWith f l [0..]
-
-unitTestsZ :: TestTree
-unitTestsZ =
-  let
-    f = extract :: (Z a -> a)
-    g = extract :: (Z a -> a)
-    x = extend f . extend g
-    y = extend (f . extend g)
-    samples = [ LZ [] True []
-              , LZ [True] False [True]
-              , LZ [True, True, True] False []
-              , LZ [True, True] False [True]
-              , LZ [True, True] False [True, True]
-              ]
-  in
+aliveNeighboursTests :: TestTree
+aliveNeighboursTests =
   testGroup
-    "Unit tests" $
-    mapInd (\sample -> \ind ->
-            testCase ("sample " ++ show ind) $
-              let
-                z = Z $ duplicate sample
-              in
-                x z @?= y z
-            ) samples
+    "neighbours unit tests"
+    [ testCase "nieghbours with no alive" $
+        let grid = Z $ duplicate $ LZ [False] False [False]
+         in aliveNeighbours grid @?= 0,
+      testCase "nieghbours with 2 alive" $
+        let grid = Z $ duplicate $ LZ [False] True [False]
+         in aliveNeighbours grid @?= 2,
+      testCase "nieghbours with 6 alive" $
+        let grid = Z $ duplicate $ LZ [True] False [True]
+         in aliveNeighbours grid @?= 6,
+      testCase "nieghbours with 8 alive" $
+        let grid = Z $ duplicate $ LZ [True] True [True]
+         in aliveNeighbours grid @?= 8
+    ]
