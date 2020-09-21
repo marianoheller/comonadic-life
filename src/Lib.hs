@@ -18,6 +18,14 @@ rightLZ :: LZ a -> LZ a
 rightLZ (LZ l a []) = LZ l a []
 rightLZ (LZ l a (r : rs)) = LZ (a : l) r rs
 
+isEndLZ :: LZ a -> Bool
+isEndLZ (LZ _ _ []) = True
+isEndLZ _ = False
+
+isStartLZ :: LZ a -> Bool
+isStartLZ (LZ [] _ _) = True
+isStartLZ _ = False
+
 write :: a -> LZ a -> LZ a
 write a (LZ l _ r) = LZ l a r
 
@@ -30,17 +38,12 @@ toListN (LZ ls x rs) n = reverse (take n ls) ++ [x] ++ take n rs
 instance Functor LZ where
   fmap f (LZ l a r) = LZ (fmap f l) (f a) (fmap f r)
 
-
 instance Comonad LZ where
   extract (LZ _ a _) = a
   duplicate z = LZ (moveLeft z) z (moveRight z)
     where
-      moveLeft = interateUntil leftLZ predLeft
-      moveRight = interateUntil rightLZ predRight
-      predLeft (LZ [] _ _) = True
-      predLeft _ = False
-      predRight (LZ _ _ []) = True
-      predRight _ = False
+      moveLeft = interateUntil leftLZ isStartLZ
+      moveRight = interateUntil rightLZ isEndLZ
 
 interateUntil :: (a -> a) -> (a -> Bool) -> a -> [a]
 interateUntil f predicate seed =
@@ -78,20 +81,16 @@ rightZ :: Z a -> Z a
 rightZ (Z lz) = Z (fmap rightLZ lz)
 
 isTopZ :: Z a -> Bool
-isTopZ (Z (LZ [] _ _)) = True
-isTopZ _ = False
+isTopZ (Z lz) = isStartLZ lz
 
 isBottomZ :: Z a -> Bool
-isBottomZ (Z (LZ _ _ [])) = True
-isBottomZ _ = False
+isBottomZ (Z lz) = isEndLZ lz
 
 isLeftZ :: Z a -> Bool
-isLeftZ (Z (LZ _ (LZ [] _ _) _ )) = True
-isLeftZ _ = False
+isLeftZ (Z (LZ _ lz _ )) = isStartLZ lz
 
 isRightZ :: Z a -> Bool
-isRightZ (Z (LZ _ (LZ _ _ []) _ )) = True
-isRightZ _ = False
+isRightZ (Z (LZ _ lz _ )) = isEndLZ lz
 
 instance Functor Z where
   fmap f (Z a) = Z $ (fmap . fmap) f a
@@ -110,6 +109,7 @@ instance Arbitrary a => Arbitrary (Z a) where
 
 instance CoArbitrary a => CoArbitrary (Z a) where
   coarbitrary = genericCoarbitrary
+
 
 {- -------------------------------------------------- -}
 {- Game Logic -}
