@@ -36,6 +36,7 @@ library
       base >=4.7 && <5
     , comonad
     , random
+    , non-empty
     , tasty
     , tasty-hunit
     , tasty-quickcheck
@@ -53,6 +54,8 @@ executable comonadic-life-exe
   build-depends:
       base >=4.7 && <5
     , comonadic-life
+    , ansi-terminal
+    , mtl
     , tasty
     , tasty-hunit
     , tasty-quickcheck

@@ -1,24 +1,30 @@
 module Main where
 
+import Control.Monad.State.Lazy
 import Lib
+import System.Console.ANSI
+import Control.Concurrent ( threadDelay )
 
 
-glider :: Z Bool
-glider =
-  Z $ LZ (repeat fz) fz rs
-  where
-    rs =
-      [ line [f, t, f],
-        line [f, f, t],
-        line [t, t, t]
-      ]
-        ++ repeat fz
-    t = True
-    f = False
-    fl = repeat f
-    fz = LZ fl f fl
-    line l =
-      LZ fl f (l ++ fl)
+reportState :: Z Bool -> IO ()
+reportState z = do
+  clearScreen
+  putStrLn $ disp z
+  return ()
+
+game :: StateT (Z Bool) IO ()
+game = do
+  z1 <- get
+  liftIO $ reportState z1
+  modify evolve
+  z2 <- get
+  liftIO $ threadDelay 1000000
+  case z1 == z2 of
+    True -> return ()
+    False -> game
 
 main :: IO ()
-main = putStrLn "asd"
+main = do
+  grid <- makeRandomZ 20
+  evalStateT game grid
+  return ()

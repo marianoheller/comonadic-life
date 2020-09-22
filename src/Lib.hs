@@ -4,11 +4,15 @@ module Lib where
 
 import Control.Comonad
 import Control.Monad (liftM2, replicateM)
+import Data.NonEmpty hiding (reverse)
 import GHC.Generics (Generic)
 import System.Random (Random (randomIO))
 import Test.Tasty.QuickCheck
 
 data LZ a = LZ [a] a [a] deriving (Eq, Show, Generic)
+
+fromNonEmpty :: T [] a -> LZ a
+fromNonEmpty (Cons a as) = LZ [] a as
 
 leftLZ :: LZ a -> LZ a
 leftLZ (LZ [] a r) = LZ [] a r
@@ -31,6 +35,9 @@ write a (LZ l _ r) = LZ l a r
 
 read :: LZ a -> a
 read (LZ _ a _) = a
+
+lzToList :: LZ a -> [a]
+lzToList (LZ ls x rs) = reverse ls ++ [x] ++ rs
 
 toListN :: LZ a -> Int -> [a]
 toListN (LZ ls x rs) n = reverse (take n ls) ++ [x] ++ take n rs
@@ -141,21 +148,31 @@ evolve = extend rule
 {- Game Display -}
 
 dispLine :: LZ Bool -> String
-dispLine z =
-  map dispC $ toListN z 6
+dispLine lz =
+  map dispC $ lzToList lz
   where
     dispC True = '*'
     dispC False = ' '
 
 disp :: Z Bool -> String
-disp (Z z) =
-  unlines $ map dispLine $ toListN z 6
+disp (Z lz) =
+  unlines $ map dispLine $ lzToList lz
 
 {- -------------------------------------------------- -}
 {- Gen -}
 
-makeRow :: Int -> IO [Bool]
-makeRow n = replicateM n randomIO
+makeRow :: Int -> IO (T [] Bool)
+makeRow n = do
+  (a : as) <- replicateM n randomIO
+  return (Cons a as)
 
-makeGrid :: Int -> IO [[Bool]]
-makeGrid n = replicateM n (makeRow n)
+makeGrid :: Int -> IO (T [] (T [] Bool))
+makeGrid n = do
+  (a : as) <- replicateM n (makeRow n)
+  return (Cons a as)
+
+makeRandomZ :: Int -> IO (Z Bool)
+makeRandomZ n = do
+  grid <- makeGrid n
+  let plane = Z $ fromNonEmpty $ fmap fromNonEmpty grid
+  return plane
